@@ -28,13 +28,33 @@ function love.load()
   recursiveEnumerate('objects', object_files)
   --requires all the objects in the objects folder.
   --this will load everything in there for now but later we can separate out the objects into folders so that we load less all at once
+  local level_files = {}
   requireFiles(object_files)
+  --same as above but for levels, this will have to go away eventually or it will load the whole game all at once and hold literally everything in memory
+  recursiveEnumerate('levels', level_files)
+  requireFiles(level_files)
+  levels = {}
+  current_level = TitleScreen
 end
 
 function love.update(dt)
-
+  if current_level then current_level:update(dt) end
 end
 
 function love.draw()
+  if current_level then current_level:draw() end
+end
 
+function addRoom(level_type, level_name, ...)
+  local level = _G[level_type](level_name, ...)
+  levels[level_name] = level
+  return level
+end
+
+function gotoRoom(level_type, level_name, ...)
+  if current_level and levels[level_name] then
+      if current_level.deactivate then current_level:deactivate() end
+      current_level = levels[level_name]
+      if current_level.activate then current_level:activate() end
+  else current_level = addRoom(level_type, level_name, ...) end
 end
